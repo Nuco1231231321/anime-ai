@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
         let width = 1920
         let height = 1920
 
+        // 根据模型限制调整分辨率 (Doubao模型通常最大支持边长为 2048 或特定比例，此处保留你的逻辑)
         if (ratio === "2:3") {
             width = 1536
             height = 2304
@@ -68,33 +69,48 @@ export async function POST(req: NextRequest) {
             baseURL: "https://ark.cn-beijing.volces.com/api/v3",
         })
 
-        const response = await client.images.generate({
-            model: endpointId,
-            prompt: finalPrompt,
-            n: quantity,
-            size: sizeStr as any,
-            response_format: "b64_json",
-            watermark: false,
-        } as any)
+
+        const promises = Array.from({ length: quantity }).map(() =>
+            client.images.generate({
+                model: endpointId,
+                prompt: finalPrompt,
+                n: 1, // 强制每次只请求 1 张，因为上游限制
+                size: sizeStr as any,
+                response_format: "b64_json",
+                watermark: false,
+            } as any)
+        );
+
+        // 并发执行所有请求 (Promise.all 会等待所有请求完成)
+        const responses = await Promise.all(promises);
 
         const imageUrls: string[] = []
 
-        if (response.data) {
-            for (const item of response.data) {
-                const base64Data = item.b64_json
-                if (!base64Data) continue
+        // 处理所有返回结果
+        for (const response of responses) {
+            if (response.data) {
+                for (const item of response.data) {
+                    const base64Data = item.b64_json
+                    if (!base64Data) continue
 
-                let imageBuffer: Buffer = Buffer.from(base64Data, "base64")
+                    let imageBuffer: Buffer = Buffer.from(base64Data, "base64")
 
-                // Apply watermark if not premium
-                if (!isPremium) {
-                    imageBuffer = await addWatermark(imageBuffer, "AnimeAI Generator")
+                    // Apply watermark if not premium
+                    if (!isPremium) {
+                        try {
+                            imageBuffer = await addWatermark(imageBuffer, "AnimeAI Generator")
+                        } catch (wmError) {
+                            console.error("Watermark failed:", wmError)
+
+                        }
+                    }
+
+                    const finalBase64 = imageBuffer.toString("base64")
+                    imageUrls.push(`data:image/jpeg;base64,${finalBase64}`)
                 }
-
-                const finalBase64 = imageBuffer.toString("base64")
-                imageUrls.push(`data:image/jpeg;base64,${finalBase64}`)
             }
         }
+        // --- 核心修改结束 ---
 
         if (imageUrls.length === 0) {
             throw new Error("No image data received from API")
@@ -107,6 +123,7 @@ export async function POST(req: NextRequest) {
         })
     } catch (error) {
         console.error("[Generate API] Error:", error)
+
         return NextResponse.json(
             {
                 success: false,

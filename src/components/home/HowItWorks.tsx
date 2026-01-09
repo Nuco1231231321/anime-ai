@@ -7,7 +7,7 @@ const steps = [
     id: "01",
     title: "Describe Your Vision",
     description: "Type a prompt or use our smart assistant to craft the perfect description.",
-    imagePlaceholder: "Input Interface Shot", 
+    imagePlaceholder: "Input Interface Shot",
   },
   {
     id: "02",
@@ -52,14 +52,12 @@ export default function HowItWorks() {
             >
               {/* 视觉展示区 (Image Area) */}
               <div className="relative aspect-[4/3] w-full bg-zinc-900 rounded-2xl overflow-hidden border border-white/10 mb-8 shadow-2xl group-hover:border-purple-500/30 transition-all duration-500">
-                {/* 占位符背景：请替换为 <img src="..." /> */}
-                <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
-                  <span className="text-zinc-600 font-mono text-sm border border-zinc-700 px-3 py-1 rounded-md">
-                    {step.imagePlaceholder}
-                  </span>
-                </div>
-                
-                {/* 悬停光效 */}
+                <img
+                  src={`/screenshots/step${index + 1}-${index === 0 ? 'prompt' : index === 1 ? 'model' : 'result'}.png`}
+                  alt={step.title}
+                  className="w-full h-full object-cover"
+                />
+
                 <div className="absolute inset-0 bg-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
               </div>
 

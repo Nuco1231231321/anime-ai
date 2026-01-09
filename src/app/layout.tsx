@@ -2,6 +2,7 @@ import './globals.css';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { Providers } from '@/components/Providers';
 import ScrollToTop from '@/components/ToTop';
+import FeedbackWidget from '@/components/feedweight';
 
 
 const inter = Inter({
@@ -32,6 +33,7 @@ export default function RootLayout({
       <body className="font-sans antialiased selection:bg-indigo-500/30">
         <Providers>{children}
           <ScrollToTop />
+          <FeedbackWidget />
         </Providers>
       </body>
     </html>
